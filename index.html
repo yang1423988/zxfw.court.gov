@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>人民法院送达平台 - 文书签收</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            -webkit-overflow-scrolling: touch;
+        }
+        .header {
+            background: #1a3c6e;
+            color: #fff;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        /* 验证界面 */
+        .verify-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 32px 24px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .verify-box h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .verify-box .subtitle {
+            font-size: 14px;
+            color: #888;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            height: 44px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 16px;
+            outline: none;
+            text-align: center;
+            letter-spacing: 8px;
+            font-weight: 600;
+        }
+        .form-group input:focus {
+            border-color: #1a3c6e;
+        }
+        .tip-box {
+            background: #fff8e6;
+            border-left: 3px solid #e6a23c;
+            padding: 10px 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #8b6914;
+            line-height: 1.5;
+        }
+        .btn-primary {
+            width: 100%;
+            height: 48px;
+            background: #1a3c6e;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .btn-primary:active {
+            background: #15305a;
+        }
+        .notice {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 16px;
+            line-height: 1.5;
+        }
+        /* 文书列表界面 */
+        .case-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .case-card .court {
+            font-size: 12px;
+            color: #1a3c6e;
+            background: #f0f4fa;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .case-card .case-no {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .case-card .case-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        .doc-list {
+            border-top: 1px solid #f0f0f0;
+            padding-top: 8px;
+        }
+        .doc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f8f8f8;
+        }
+        .doc-item:last-child {
+            border-bottom: none;
+        }
+        .doc-name {
+            font-size: 14px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .doc-type {
+            font-size: 12px;
+            color: #e6a23c;
+            background: #fdf6ec;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .btn-download {
+            font-size: 14px;
+            color: #1a3c6e;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        .btn-download:active {
+            opacity: 0.7;
+        }
+        .hidden { display: none!important; }
+        /* ========== 预览功能样式 ========== */
+        .preview-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .preview-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 48px;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            z-index: 10000;
+            color: #fff;
+            font-size: 16px;
+        }
+        .preview-close, .preview-download {
+            font-size: 14px;
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .preview-content {
+            padding-top: 48px;
+            padding-bottom: 60px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        /* PDF预览 */
+        .pdf-canvas {
+            max-width: 100%;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+        /* 图片预览 */
+        .preview-img {
+            max-width: 100%;
+            display: block;
+        }
+        /* 翻页控制栏 */
+        .preview-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            z-index: 10000;
+            color: #fff;
+        }
+        .page-btn {
+            width: 80px;
+            height: 32px;
+            line-height: 32px;
+            text-align: center;
+            background: rgba(255,255,255,0.15);
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .page-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .page-info {
+            font-size: 14px;
+            min-width: 60px;
+            text-align: center;
+        }
+        .loading {
+            color: #fff;
+            text-align: center;
+            padding: 100px 20px;
+            font-size: 14px;
+        }
+        body.no-scroll {
+            overflow: hidden;
+        }
+        /* 签收成功提示 */
+        .success-box {
+            background: #f0f9eb;
+            border: 1px solid #e1f3d8;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #67c23a;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">人民法院送达平台</div>
+    <div class="container">
+        <!-- 身份验证界面 -->
+        <div id="verifyView" class="verify-box">
+            <h2>文书送达验证</h2>
+            <p class="subtitle">请输入身份信息后四位以查看文书</p>
+            
+            <div class="tip-box">
+                💡 请您输入身份证号后4位和手机号后4位验证身份，验证通过即可查看相关法律文书。
+            </div>
+
+            <div class="form-group">
+                <label>身份证号后4位</label>
+                <input type="text" id="idCardTail" placeholder="请输入身份证后4位" maxlength="4" inputmode="numeric">
+            </div>
+            <div class="form-group">
+                <label>手机号后4位</label>
+                <input type="text" id="phoneTail" placeholder="请输入手机号后4位" maxlength="4" inputmode="numeric">
+            </div>
+
+            <button class="btn-primary" onclick="verifyIdentity()">验证并查看文书</button>
+            <p class="notice">短信由12368诉讼服务热线发送<br>本平台不涉及任何缴费、转账操作</p>
+        </div>
+
+        <!-- 文书列表界面 -->
+        <div id="docView" class="hidden">
+            <div class="success-box" id="signTip">
+                ✅ 身份验证成功，请查看并签收文书
+            </div>
+
+            <div class="case-card">
+                <span class="court">广东省广州市中级人民法院</span>
+                <div class="case-no">（2026）粤0104执异1274号</div>
+                <div class="case-title">容嘉颜、杨宗明与林江峰、李勇房屋买卖合同纠纷</div>
+                <!-- 文书列表由脚本按下方“文书配置区”自动生成，不需要在这里手写 -->
+                <div class="doc-list" id="docList"></div>
+            </div>
+
+            <div class="notice" style="margin-top: 20px;">
+                签收时间将作为送达时间，具有法律效力
+            </div>
+        </div>
+    </div>
+
+    <!-- 预览层容器 -->
+    <div id="previewMask" class="preview-mask hidden">
+        <div class="preview-header">
+            <span class="preview-close" onclick="closePreview()">关闭</span>
+            <span id="previewTitle">文书预览</span>
+            <span class="preview-download" onclick="signAndDownload()">签收并下载</span>
+        </div>
+        <div class="preview-content" id="previewContent">
+            <div class="loading">文书加载中...</div>
+        </div>
+        <div class="preview-footer hidden" id="previewFooter">
+            <span class="page-btn" id="prevPage" onclick="changePage(-1)">上一页</span>
+            <span class="page-info" id="pageInfo">1/1</span>
+            <span class="page-btn" id="nextPage" onclick="changePage(1)">下一页</span>
+        </div>
+    </div>
+
+    <!-- PDF.js 改为页面内异步加载（见页面底部脚本），避免外部资源慢时拖住整页显示 -->
+    <script>
+        // ========== 在这里添加/修改验证密码 ==========
+        // 格式：每组是 [身份证后4位, 手机号后4位]，加多少组都可以
+        const VALID_COMBINATIONS = [
+            ['4457', '8989'],   // 第一组
+            ['4423', '9309'],   // 第二组（新增）
+            ['3391', '4382']    // 第三组（新增）
+        ];
+        // ==========================================
+
+        // ========== 【文书配置区】加 PDF / 图片只需要改这里 ==========
+        // 一份文书一个 { }，复制一行改名字和路径即可，列表会自动生成
+        // type  ：'pdf' 表示 PDF 文书，'img' 表示 jpg/png 图片文书
+        // url   ：文件地址，三种写法：
+        //         1) 和本 html 放同一文件夹  → './执行裁定书.pdf'
+        //         2) 放在子文件夹里          → './docs/执行裁定书.pdf'
+        //         3) 远程服务器 / OSS / CDN  → 'https://你的域名.com/files/执行裁定书.pdf'
+        const DOCS = [
+            // 只有一份文书：执行裁定书。PDF 文件与本 html 放在同一个文件夹里。
+            // 如果你的 PDF 文件名不是「执行裁定书.pdf」，把下面的文件名改成你的实际文件名即可（含后缀、大小写要一致）
+            { name: '执行裁定书', type: 'pdf', url: './执行裁定书.pdf' }
+        ];
+        // ==============================================================
+
+        // 全局预览状态
+        let currentFile = null;
+        let currentDocName = '';
+        let currentDocIndex = -1;
+        let pdfDoc = null;
+        let currentPage = 1;
+        let totalPages = 1;
+        let scale = 1.5; // PDF渲染缩放比例，越大越清晰
+        let signedDocs = new Set(); // 已签收的文书
+
+        // 按配置区生成文书列表
+        function renderDocList() {
+            const box = document.getElementById('docList');
+            box.innerHTML = DOCS.map((d, i) => `
+                <div class="doc-item">
+                    <span class="doc-name">📄 ${d.name} <span class="doc-type" id="docType${i}">待签收</span></span>
+                    <span class="btn-download" id="docBtn${i}" onclick="openPreview('${d.type}', '${d.url}', '${d.name}', ${i})">查看并签收</span>
+                </div>
+            `).join('');
+        }
+
+        // 初始化PDF.js worker
+        // 后台异步加载 PDF.js：加载好了 PDF 就能在页面内翻页预览；
+        // 万一加载不出来，也只会退化为内嵌显示，不影响页面其他功能
+        (function loadPdfJs() {
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+            s.onload = function () {
+                if (typeof pdfjsLib !== 'undefined') {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+                }
+            };
+            s.onerror = function () { console.warn('PDF.js 加载失败，PDF 将以内嵌方式显示'); };
+            document.head.appendChild(s);
+        })();
+
+        // 身份验证
+        function verifyIdentity() {
+            const idTail = document.getElementById('idCardTail').value.trim();
+            const phoneTail = document.getElementById('phoneTail').value.trim();
+
+            if (idTail.length !== 4 || phoneTail.length !== 4) {
+                alert('请输入完整的4位尾号');
+                return;
+            }
+
+            if (!/^\d{4}$/.test(idTail) || !/^\d{4}$/.test(phoneTail)) {
+                alert('尾号只能输入数字');
+                return;
+            }
+
+            // 遍历所有验证组合，任意一组匹配就通过
+            let passed = false;
+            for (let i = 0; i < VALID_COMBINATIONS.length; i++) {
+                if (idTail === VALID_COMBINATIONS[i][0] && phoneTail === VALID_COMBINATIONS[i][1]) {
+                    passed = true;
+                    break;
+                }
+            }
+
+            if (passed) {
+                // 验证通过
+                document.getElementById('verifyView').classList.add('hidden');
+                document.getElementById('docView').classList.remove('hidden');
+            } else {
+                alert('身份验证失败，请核对后重新输入');
+            }
+        }
+
+        // 输入框只做「非数字过滤」，不会自动跳转、不会自动验证
+        // 验证时机完全由「验证并查看文书」按钮控制
+        ['idCardTail', 'phoneTail'].forEach(function (id) {
+            document.getElementById(id).addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '');
+            });
+        });
+
+        // 打开预览
+        function openPreview(type, url, docName, index) {
+            currentFile = { type, url };
+            currentDocName = docName;
+            currentDocIndex = (typeof index === 'number') ? index : -1;
+            const mask = document.getElementById('previewMask');
+            const content = document.getElementById('previewContent');
+            const footer = document.getElementById('previewFooter');
+            const title = document.getElementById('previewTitle');
+            
+            mask.classList.remove('hidden');
+            document.body.classList.add('no-scroll');
+            content.innerHTML = '<div class="loading">文书加载中...</div>';
+            footer.classList.add('hidden');
+            title.textContent = docName;
+            currentPage = 1;
+
+            if (type === 'img') {
+                renderImage(url);
+            } else if (type === 'pdf') {
+                // 本地双击打开（file://）时 PDF.js 无法读取本地文件，直接内嵌显示；
+                // 外部 PDF.js 未加载成功时同样走内嵌方式
+                if (window.location.protocol === 'file:' || typeof pdfjsLib === 'undefined') {
+                    showPdfFallback(url);
+                } else {
+                    renderPdf(url);
+                }
+            }
+        }
+
+        // 渲染图片
+        function renderImage(url) {
+            const content = document.getElementById('previewContent');
+            content.innerHTML = `<img src="${url}" class="preview-img" alt="文书图片">`;
+        }
+
+        // 渲染PDF
+        async function renderPdf(url) {
+            const footer = document.getElementById('previewFooter');
+            const pageInfo = document.getElementById('pageInfo');
+            let aborted = false;
+
+            // 兜底：8 秒内没渲染出来就改用 iframe 内嵌显示，避免一直停在“加载中”
+            const timer = setTimeout(() => {
+                if (aborted) return;
+                aborted = true;
+                showPdfFallback(url);
+            }, 8000);
+
+            try {
+                const loadingTask = pdfjsLib.getDocument(url);
+                pdfDoc = await loadingTask.promise;
+                if (aborted) return;
+                totalPages = pdfDoc.numPages;
+
+                footer.classList.remove('hidden');
+                pageInfo.textContent = `${currentPage}/${totalPages}`;
+                updatePageBtnStatus();
+                await renderPdfPage(currentPage);
+                clearTimeout(timer);
+            } catch (err) {
+                clearTimeout(timer);
+                console.error('PDF加载失败，改用内嵌方式显示:', err);
+                if (!aborted) showPdfFallback(url);
+            }
+        }
+
+        // PDF 内嵌兜底显示（本地打开、或跨域受限时使用）
+        function showPdfFallback(url) {
+            const content = document.getElementById('previewContent');
+            document.getElementById('previewFooter').classList.add('hidden');
+            content.innerHTML = `
+                <div style="width:100%; display:flex; flex-direction:column; align-items:center;">
+                    <iframe src="${url}" title="文书预览" style="width:100%; height:calc(100vh - 110px); border:none; background:#fff;"></iframe>
+                    <button onclick="window.open('${url}', '_blank')" style="margin:14px 0; padding:10px 20px; background:#1a3c6e; color:#fff; border:none; border-radius:6px; font-size:14px; width:220px; cursor:pointer;">
+                        在新窗口打开 PDF
+                    </button>
+                    <p style="font-size:12px; color:#aaa; margin-bottom:20px;">若上方为空白，请点击按钮在新窗口查看</p>
+                </div>
+            `;
+        }
+
+        // 渲染PDF单页
+        async function renderPdfPage(pageNum) {
+            const content = document.getElementById('previewContent');
+            content.innerHTML = '<div class="loading">页面加载中...</div>';
+            
+            const page = await pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: scale });
+            
+            // 高清屏适配
+            const dpr = window.devicePixelRatio || 1;
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-canvas';
+            canvas.width = viewport.width * dpr;
+            canvas.height = viewport.height * dpr;
+            canvas.style.width = viewport.width + 'px';
+            canvas.style.height = viewport.height + 'px';
+            
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            
+            await page.render({
+                canvasContext: ctx,
+                viewport: viewport
+            }).promise;
+
+            content.innerHTML = '';
+            content.appendChild(canvas);
+            document.getElementById('pageInfo').textContent = `${pageNum}/${totalPages}`;
+            updatePageBtnStatus();
+        }
+
+        // 翻页
+        function changePage(delta) {
+            const newPage = currentPage + delta;
+            if (newPage < 1 || newPage > totalPages) return;
+            currentPage = newPage;
+            renderPdfPage(currentPage);
+            document.getElementById('previewContent').scrollTop = 0;
+        }
+
+        // 更新翻页按钮状态
+        function updatePageBtnStatus() {
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+            prevBtn.classList.toggle('disabled', currentPage <= 1);
+            nextBtn.classList.toggle('disabled', currentPage >= totalPages);
+        }
+
+        // 签收并下载
+        function signAndDownload() {
+            if (!currentFile) return;
+            
+            // 标记为已签收
+            signedDocs.add(currentDocName);
+
+            // 更新列表中该条文书的状态
+            if (currentDocIndex >= 0) {
+                const typeTag = document.getElementById('docType' + currentDocIndex);
+                const btn = document.getElementById('docBtn' + currentDocIndex);
+                if (typeTag) {
+                    typeTag.textContent = '已签收';
+                    typeTag.style.color = '#67c23a';
+                    typeTag.style.background = '#f0f9eb';
+                }
+                if (btn) {
+                    btn.textContent = '查看';
+                }
+            }
+
+            // 弹出提示
+            alert('✅ ' + currentDocName + ' 已成功签收\n\n送达时间：' + new Date().toLocaleString() + '\n\n');
+            
+            // 下载文件
+            window.open(currentFile.url, '_blank');
+            
+            // 关闭预览
+            closePreview();
+        }
+
+        // 关闭预览
+        function closePreview() {
+            document.getElementById('previewMask').classList.add('hidden');
+            document.body.classList.remove('no-scroll');
+            pdfDoc = null;
+            currentFile = null;
+            currentDocName = '';
+            currentDocIndex = -1;
+        }
+
+        // 页面加载时按文书配置区生成列表
+        renderDocList();
+    </script>
+</body>
+</html>
